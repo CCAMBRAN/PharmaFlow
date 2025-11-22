@@ -11,8 +11,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from services.clinical_service import ClinicalService
+from api.dependencies import get_db_connector
 
 router = APIRouter()
+
+# Obtener conector de BD
+db_connector = get_db_connector()
 
 # ============= MODELOS PYDANTIC =============
 
@@ -61,7 +65,7 @@ async def listar_ensayos(
 ):
     """Listar ensayos clínicos con filtros opcionales"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         
         if solo_activos:
             ensayos = service.listar_ensayos_activos()
@@ -93,7 +97,7 @@ async def listar_ensayos(
 async def crear_ensayo(ensayo: EnsayoCreate):
     """Crear nuevo ensayo clínico"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         ensayo_data = ensayo.model_dump()
         ensayo_id = service.crear_ensayo(ensayo_data)
         return {
@@ -109,7 +113,7 @@ async def crear_ensayo(ensayo: EnsayoCreate):
 async def obtener_ensayo(codigo_ensayo: str):
     """Obtener ensayo clínico por código"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         ensayo = service.obtener_ensayo(codigo_ensayo)
         if not ensayo:
             raise HTTPException(status_code=404, detail="Ensayo no encontrado")
@@ -124,7 +128,7 @@ async def obtener_ensayo(codigo_ensayo: str):
 async def actualizar_ensayo(codigo_ensayo: str, updates: EnsayoUpdate):
     """Actualizar ensayo clínico"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         updates_dict = {k: v for k, v in updates.model_dump().items() if v is not None}
         
         if not updates_dict:
@@ -144,7 +148,7 @@ async def actualizar_ensayo(codigo_ensayo: str, updates: EnsayoUpdate):
 async def eliminar_ensayo(codigo_ensayo: str, hard_delete: bool = Query(False)):
     """Eliminar ensayo clínico (soft delete por defecto)"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         resultado = service.eliminar_ensayo(codigo_ensayo, hard_delete)
         
         if hard_delete:
@@ -160,7 +164,7 @@ async def eliminar_ensayo(codigo_ensayo: str, hard_delete: bool = Query(False)):
 async def agregar_observacion(codigo_ensayo: str, observacion: ObservacionCreate):
     """Agregar observación a un ensayo"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         obs_data = observacion.model_dump()
         service.agregar_observacion(codigo_ensayo, **obs_data)
         return {"message": "Observación agregada exitosamente"}
@@ -173,7 +177,7 @@ async def agregar_observacion(codigo_ensayo: str, observacion: ObservacionCreate
 async def actualizar_participantes(codigo_ensayo: str, participantes: ParticipantesUpdate):
     """Actualizar contadores de participantes"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         updates = {k: v for k, v in participantes.model_dump().items() if v is not None}
         
         if not updates:
@@ -190,7 +194,7 @@ async def actualizar_participantes(codigo_ensayo: str, participantes: Participan
 async def agregar_resultado(codigo_ensayo: str, resultado: ResultadoCreate):
     """Agregar resultados a un ensayo"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         service.agregar_resultado(codigo_ensayo, resultado.categoria, resultado.datos)
         return {"message": f"Resultado '{resultado.categoria}' agregado exitosamente"}
     except ValueError as e:
@@ -210,7 +214,7 @@ async def busqueda_avanzada(
 ):
     """Búsqueda avanzada con múltiples criterios"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         criterios = {}
         
         if fase:
@@ -245,7 +249,7 @@ async def busqueda_avanzada(
 async def estadisticas_por_fase():
     """Obtener estadísticas agregadas por fase"""
     try:
-        service = ClinicalService()
+        service = ClinicalService(db_connector)
         estadisticas = service.estadisticas_por_fase()
         return {
             "total_fases": len(estadisticas),

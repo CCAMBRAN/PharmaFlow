@@ -191,6 +191,46 @@ class UserService:
             return []
         finally:
             cursor.close()
+    
+    def listar_usuarios(self):
+        """Listar todos los usuarios activos"""
+        connection = self.db_connector.connect_mysql()
+        if not connection:
+            return []
+        
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id, username, nombre, email, rol, activo, fecha_creacion
+                FROM usuarios
+                ORDER BY id
+            """)
+            return cursor.fetchall()
+        except Error as e:
+            print(f"Error listando usuarios: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def obtener_usuario_por_id(self, usuario_id):
+        """Obtener usuario por ID"""
+        connection = self.db_connector.connect_mysql()
+        if not connection:
+            return None
+        
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id, username, nombre, email, rol, activo, fecha_creacion
+                FROM usuarios
+                WHERE id = %s
+            """, (usuario_id,))
+            return cursor.fetchone()
+        except Error as e:
+            print(f"Error obteniendo usuario: {e}")
+            return None
+        finally:
+            cursor.close()
 
 
 def require_permission(permiso_nombre):

@@ -12,8 +12,12 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from services.user_service import UserService
 from services.inventory_service import InventoryService
+from api.dependencies import get_db_connector
 
 router = APIRouter()
+
+# Obtener conector de BD
+db_connector = get_db_connector()
 
 # ============= MODELOS PYDANTIC =============
 
@@ -47,7 +51,7 @@ class VentaCreate(BaseModel):
 async def listar_usuarios():
     """Listar todos los usuarios"""
     try:
-        service = UserService()
+        service = UserService(db_connector)
         usuarios = service.listar_usuarios()
         return {"usuarios": usuarios}
     except Exception as e:
@@ -57,7 +61,7 @@ async def listar_usuarios():
 async def crear_usuario(usuario: UsuarioCreate):
     """Crear nuevo usuario"""
     try:
-        service = UserService()
+        service = UserService(db_connector)
         usuario_id = service.crear_usuario(
             usuario.nombre_usuario,
             usuario.contrasena,
@@ -72,7 +76,7 @@ async def crear_usuario(usuario: UsuarioCreate):
 async def obtener_usuario(usuario_id: int):
     """Obtener usuario por ID"""
     try:
-        service = UserService()
+        service = UserService(db_connector)
         usuario = service.obtener_usuario_por_id(usuario_id)
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -86,7 +90,7 @@ async def obtener_usuario(usuario_id: int):
 async def obtener_permisos_usuario(usuario_id: int):
     """Obtener permisos de un usuario"""
     try:
-        service = UserService()
+        service = UserService(db_connector)
         permisos = service.obtener_permisos_usuario(usuario_id)
         return {"usuario_id": usuario_id, "permisos": permisos}
     except Exception as e:
@@ -96,7 +100,7 @@ async def obtener_permisos_usuario(usuario_id: int):
 async def eliminar_usuario(usuario_id: int):
     """Eliminar usuario"""
     try:
-        service = UserService()
+        service = UserService(db_connector)
         # Implementar lógica de eliminación
         return {"message": f"Usuario {usuario_id} eliminado"}
     except Exception as e:
@@ -108,7 +112,7 @@ async def eliminar_usuario(usuario_id: int):
 async def listar_medicamentos():
     """Listar todos los medicamentos"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         medicamentos = service.listar_medicamentos()
         return {"medicamentos": medicamentos}
     except Exception as e:
@@ -118,7 +122,7 @@ async def listar_medicamentos():
 async def crear_medicamento(med: MedicamentoCreate):
     """Crear nuevo medicamento"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         med_id = service.crear_medicamento(
             med.nombre,
             med.principio_activo,
@@ -133,7 +137,7 @@ async def crear_medicamento(med: MedicamentoCreate):
 async def obtener_medicamento(medicamento_id: int):
     """Obtener medicamento por ID"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         medicamento = service.obtener_medicamento(medicamento_id)
         if not medicamento:
             raise HTTPException(status_code=404, detail="Medicamento no encontrado")
@@ -147,7 +151,7 @@ async def obtener_medicamento(medicamento_id: int):
 async def obtener_stock_medicamento(medicamento_id: int):
     """Obtener stock total de un medicamento"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         stock = service.obtener_stock_total(medicamento_id)
         return {
             "medicamento_id": medicamento_id,
@@ -162,7 +166,7 @@ async def obtener_stock_medicamento(medicamento_id: int):
 async def listar_lotes(medicamento_id: Optional[int] = Query(None)):
     """Listar lotes (opcionalmente filtrados por medicamento)"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         lotes = service.listar_lotes(medicamento_id)
         return {"lotes": lotes}
     except Exception as e:
@@ -172,7 +176,7 @@ async def listar_lotes(medicamento_id: Optional[int] = Query(None)):
 async def crear_lote(lote: LoteCreate):
     """Crear nuevo lote de medicamento"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         lote_id = service.crear_lote(
             lote.medicamento_id,
             lote.numero_lote,
@@ -191,7 +195,7 @@ async def crear_lote(lote: LoteCreate):
 async def listar_ventas(usuario_id: Optional[int] = Query(None)):
     """Listar ventas (opcionalmente filtradas por usuario)"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         ventas = service.listar_ventas(usuario_id)
         return {"ventas": ventas}
     except Exception as e:
@@ -201,7 +205,7 @@ async def listar_ventas(usuario_id: Optional[int] = Query(None)):
 async def registrar_venta(venta: VentaCreate):
     """Registrar nueva venta"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         venta_id = service.registrar_venta(venta.usuario_id, venta.detalles)
         return {"message": "Venta registrada", "venta_id": venta_id}
     except Exception as e:
@@ -211,7 +215,7 @@ async def registrar_venta(venta: VentaCreate):
 async def obtener_venta(venta_id: int):
     """Obtener detalle de una venta"""
     try:
-        service = InventoryService()
+        service = InventoryService(db_connector)
         venta = service.obtener_venta(venta_id)
         if not venta:
             raise HTTPException(status_code=404, detail="Venta no encontrada")
@@ -231,7 +235,7 @@ async def obtener_auditoria(
 ):
     """Obtener registros de auditoría"""
     try:
-        service = UserService()
+        service = UserService(db_connector)
         registros = service.obtener_auditoria(usuario_id, accion, limite)
         return {"registros": registros}
     except Exception as e:

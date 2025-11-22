@@ -10,8 +10,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from services.graph_service import GraphService
+from api.dependencies import get_db_connector
 
 router = APIRouter()
+
+# Obtener conector de BD
+db_connector = get_db_connector()
 
 # ============= MODELOS PYDANTIC =============
 
@@ -35,7 +39,7 @@ class InteraccionCreate(BaseModel):
 async def listar_medicamentos():
     """Listar todos los medicamentos en el grafo"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         medicamentos = service.listar_todos_medicamentos()
         return {
             "total": len(medicamentos),
@@ -48,7 +52,7 @@ async def listar_medicamentos():
 async def obtener_compuestos_medicamento(nombre: str):
     """Obtener todos los compuestos de un medicamento"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         compuestos = service.obtener_compuestos_medicamento(nombre)
         return {
             "medicamento": nombre,
@@ -62,7 +66,7 @@ async def obtener_compuestos_medicamento(nombre: str):
 async def obtener_interacciones(nombre: str):
     """Obtener interacciones medicamentosas"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         interacciones = service.obtener_interacciones_medicamento(nombre)
         return {
             "medicamento": nombre,
@@ -76,7 +80,7 @@ async def obtener_interacciones(nombre: str):
 async def detectar_interacciones(medicamentos: str = Query(..., description="Lista separada por comas")):
     """Detectar interacciones entre múltiples medicamentos"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         lista_meds = [m.strip() for m in medicamentos.split(',')]
         
         if len(lista_meds) < 2:
@@ -97,7 +101,7 @@ async def detectar_interacciones(medicamentos: str = Query(..., description="Lis
 async def camino_mas_corto(origen: str = Query(...), destino: str = Query(...)):
     """Encontrar camino más corto entre dos nodos"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         camino = service.encontrar_camino_mas_corto(origen, destino)
         
         if not camino:
@@ -122,7 +126,7 @@ async def camino_mas_corto(origen: str = Query(...), destino: str = Query(...)):
 async def sugerir_alternativas(medicamento: str):
     """Sugerir medicamentos alternativos basados en compuestos similares"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         alternativas = service.sugerir_medicamentos_alternativos(medicamento)
         return {
             "medicamento_original": medicamento,
@@ -138,7 +142,7 @@ async def sugerir_alternativas(medicamento: str):
 async def obtener_estadisticas_grafo():
     """Obtener estadísticas del grafo"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         stats = service.obtener_estadisticas_grafo()
         return stats
     except Exception as e:
@@ -150,7 +154,7 @@ async def obtener_estadisticas_grafo():
 async def crear_medicamento(medicamento: MedicamentoNodo):
     """Crear nodo de medicamento"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         service.crear_nodo_medicamento(medicamento.nombre, medicamento.descripcion)
         return {"message": f"Medicamento '{medicamento.nombre}' creado"}
     except Exception as e:
@@ -160,7 +164,7 @@ async def crear_medicamento(medicamento: MedicamentoNodo):
 async def crear_compuesto(compuesto: CompuestoNodo):
     """Crear nodo de compuesto"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         service.crear_nodo_compuesto(compuesto.nombre, compuesto.formula)
         return {"message": f"Compuesto '{compuesto.nombre}' creado"}
     except Exception as e:
@@ -170,7 +174,7 @@ async def crear_compuesto(compuesto: CompuestoNodo):
 async def crear_interaccion(interaccion: InteraccionCreate):
     """Crear relación de interacción entre medicamentos"""
     try:
-        service = GraphService()
+        service = GraphService(db_connector)
         service.crear_interaccion(
             interaccion.medicamento1,
             interaccion.medicamento2,

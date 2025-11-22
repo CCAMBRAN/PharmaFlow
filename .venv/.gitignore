@@ -23,3 +23,6 @@ Thumbs.db
 # Test / coverage outputs
 .pytest_cache/
 .coverage
+
+.services/
+htmlcov/

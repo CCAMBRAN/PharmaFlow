@@ -10,8 +10,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from services.keyvalue_service import KeyValueService
+from api.dependencies import get_db_connector
 
 router = APIRouter()
+
+# Obtener conector de BD
+db_connector = get_db_connector()
 
 # ============= MODELOS PYDANTIC =============
 
@@ -32,7 +36,7 @@ class CachePrecio(BaseModel):
 async def crear_sesion(sesion: SesionCreate):
     """Crear nueva sesión de usuario"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         session_id = service.crear_sesion(
             sesion.usuario_id,
             sesion.nombre_usuario,
@@ -51,7 +55,7 @@ async def crear_sesion(sesion: SesionCreate):
 async def obtener_sesion(session_id: str):
     """Obtener datos de sesión"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         datos = service.obtener_sesion(session_id)
         if not datos:
             raise HTTPException(status_code=404, detail="Sesión no encontrada o expirada")
@@ -65,7 +69,7 @@ async def obtener_sesion(session_id: str):
 async def cerrar_sesion(session_id: str):
     """Cerrar sesión (logout)"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         service.cerrar_sesion(session_id)
         return {"message": "Sesión cerrada"}
     except Exception as e:
@@ -75,7 +79,7 @@ async def cerrar_sesion(session_id: str):
 async def listar_sesiones_activas():
     """Listar todas las sesiones activas"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         sesiones = service.listar_sesiones_activas()
         return {
             "total": len(sesiones),
@@ -90,7 +94,7 @@ async def listar_sesiones_activas():
 async def cachear_precio(cache: CachePrecio):
     """Cachear precio de medicamento"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         service.cachear_precio(
             cache.medicamento_id,
             cache.precio,
@@ -108,7 +112,7 @@ async def cachear_precio(cache: CachePrecio):
 async def obtener_precio_cache(medicamento_id: int):
     """Obtener precio desde caché"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         precio = service.obtener_precio_cache(medicamento_id)
         if precio is None:
             raise HTTPException(status_code=404, detail="Precio no encontrado en caché")
@@ -125,7 +129,7 @@ async def obtener_precio_cache(medicamento_id: int):
 async def invalidar_precio_cache(medicamento_id: int):
     """Invalidar precio en caché"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         service.invalidar_precio_cache(medicamento_id)
         return {"message": "Precio invalidado"}
     except Exception as e:
@@ -137,7 +141,7 @@ async def invalidar_precio_cache(medicamento_id: int):
 async def incrementar_contador(nombre: str, cantidad: int = Query(1, ge=1)):
     """Incrementar contador"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         nuevo_valor = service.incrementar_contador(nombre, cantidad)
         return {
             "contador": nombre,
@@ -150,7 +154,7 @@ async def incrementar_contador(nombre: str, cantidad: int = Query(1, ge=1)):
 async def obtener_contador(nombre: str):
     """Obtener valor de contador"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         valor = service.obtener_contador(nombre)
         return {
             "contador": nombre,
@@ -163,7 +167,7 @@ async def obtener_contador(nombre: str):
 async def resetear_contador(nombre: str):
     """Resetear contador a 0"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         service.resetear_contador(nombre)
         return {"message": f"Contador '{nombre}' reseteado"}
     except Exception as e:
@@ -175,7 +179,7 @@ async def resetear_contador(nombre: str):
 async def registrar_actividad(usuario_id: int, actividad: Dict[str, Any]):
     """Registrar actividad de usuario"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         service.registrar_actividad_usuario(usuario_id, actividad)
         return {"message": "Actividad registrada"}
     except Exception as e:
@@ -185,7 +189,7 @@ async def registrar_actividad(usuario_id: int, actividad: Dict[str, Any]):
 async def obtener_actividad(usuario_id: int, limite: int = Query(10, le=100)):
     """Obtener actividad reciente de usuario"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         actividades = service.obtener_actividad_reciente(usuario_id, limite)
         return {
             "usuario_id": usuario_id,
@@ -201,7 +205,7 @@ async def obtener_actividad(usuario_id: int, limite: int = Query(10, le=100)):
 async def obtener_estadisticas_redis():
     """Obtener estadísticas de Redis"""
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         info = service.redis.info()
         return {
             "servidor": {
@@ -234,7 +238,7 @@ async def limpiar_redis(confirmar: bool = Query(False)):
             detail="Debe confirmar la operación con ?confirmar=true"
         )
     try:
-        service = KeyValueService()
+        service = KeyValueService(db_connector)
         service.redis.flushdb()
         return {"message": "Base de datos Redis limpiada"}
     except Exception as e:
